@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐱 Cat's Bank</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#1a1a1a;
+    color:white;
+    margin:20px;
+}
+
+.box{
+    background:#2a2a2a;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+input,select,button{
+    padding:10px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    background:orange;
+    color:white;
+    cursor:pointer;
+}
+
+h1,h2,h3{
+    color:orange;
+}
+
+#qrcode{
+    display:block;
+    margin:10px auto;
+    background:white;
+    padding:10px;
+    border-radius:10px;
+}
+</style>
+</head>
+<body>
+
+<h1>🐱 Cat's Bank</h1>
+
+<div class="box">
+    <h2>📱 QR Code</h2>
+    <canvas id="qrcode" width="220" height="220"></canvas>
+</div>
+
+<div class="box">
+    <h2>Utente</h2>
+
+    <input id="code" placeholder="Codice">
+    <button onclick="login()">Entra</button>
+
+    <div id="userArea" style="display:none;">
+
+        <p><b>Saldo:</b> <span id="saldo"></span></p>
+
+        <input id="nome" placeholder="Nome">
+
+        <select id="outfit">
+            <option>🧢 Outfit Blu</option>
+            <option>👑 Outfit Reale</option>
+            <option>😎 Outfit Cool</option>
+            <option>🐱 Outfit Gatto</option>
+        </select>
+
+        <button onclick="salvaProfilo()">Salva Profilo</button>
+
+        <br><br>
+
+        <input id="deposito" type="number" placeholder="Crediti da depositare">
+        <button onclick="deposita()">Deposita</button>
+
+        <p id="msg"></p>
+
+    </div>
+</div>
+
+<div class="box">
+    <h2>🔒 Admin</h2>
+
+    <input id="adminPass" type="password" placeholder="Password Admin">
+    <button onclick="adminLogin()">Entra</button>
+
+    <div id="adminArea" style="display:none;">
+
+        <h3>Crea Codice</h3>
+
+        <input id="newCode" placeholder="Nuovo Codice">
+        <input id="newCredits" type="number" placeholder="Crediti">
+
+        <button onclick="creaCodice()">Crea</button>
+
+        <h3>Ricarica Codice</h3>
+
+        <input id="ricCode" placeholder="Codice">
+        <input id="ricAmount" type="number" placeholder="Crediti da aggiungere">
+
+        <button onclick="ricarica()">Ricarica</button>
+
+        <h3>Codici Esistenti</h3>
+
+        <pre id="lista"></pre>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+
+let codes = {
+    "CAT100": 1000,
+    "CAT500": 5000,
+    "VIP999": 10000
+};
+
+let users = {};
+
+let currentCode = "";
+
+const ADMIN_PASSWORD = "MEGAWARCAT17";
+
+function aggiornaLista(){
+    let testo = "";
+
+    for(let c in codes){
+        testo += c + " = " + codes[c] + " crediti\n";
+    }
+
+    document.getElementById("lista").textContent = testo;
+}
+
+function login(){
+
+    let code = document.getElementById("code").value;
+
+    if(codes[code] === undefined){
+        alert("Codice non valido");
+        return;
+    }
+
+    currentCode = code;
+
+    document.getElementById("userArea").style.display = "block";
+
+    document.getElementById("saldo").textContent = codes[code];
+
+    if(!users[code]){
+        users[code] = {
+            nome: "",
+            outfit: "🧢 Outfit Blu"
+        };
+    }
+
+    document.getElementById("nome").value = users[code].nome;
+    document.getElementById("outfit").value = users[code].outfit;
+}
+
+function salvaProfilo(){
+
+    users[currentCode].nome =
+        document.getElementById("nome").value;
+
+    users[currentCode].outfit =
+        document.getElementById("outfit").value;
+
+    alert("Profilo salvato!");
+}
+
+function deposita(){
+
+    let valore =
+        parseInt(document.getElementById("deposito").value);
+
+    if(isNaN(valore) || valore <= 0){
+        alert("Valore non valido");
+        return;
+    }
+
+    if(valore > codes[currentCode]){
+        alert("Crediti insufficienti");
+        return;
+    }
+
+    codes[currentCode] -= valore;
+
+    document.getElementById("saldo").textContent =
+        codes[currentCode];
+
+    document.getElementById("msg").innerHTML =
+        "✅ " +
+        users[currentCode].nome +
+        " ha depositato " +
+        valore +
+        " crediti nella Cat's Bank.";
+}
+
+function adminLogin(){
+
+    let pass =
+        document.getElementById("adminPass").value;
+
+    if(pass === ADMIN_PASSWORD){
+
+        document.getElementById("adminArea")
+            .style.display = "block";
+
+        aggiornaLista();
+
+        alert("Accesso admin riuscito!");
+
+    }else{
+
+        alert("Password errata");
+
+    }
+}
+
+function creaCodice(){
+
+    let codice =
+        document.getElementById("newCode").value;
+
+    let crediti =
+        parseInt(document.getElementById("newCredits").value);
+
+    if(!codice || isNaN(crediti)){
+        alert("Dati non validi");
+        return;
+    }
+
+    codes[codice] = crediti;
+
+    aggiornaLista();
+
+    alert("Codice creato!");
+}
+
+function ricarica(){
+
+    let codice =
+        document.getElementById("ricCode").value;
+
+    let crediti =
+        parseInt(document.getElementById("ricAmount").value);
+
+    if(codes[codice] === undefined){
+        alert("Codice inesistente");
+        return;
+    }
+
+    codes[codice] += crediti;
+
+    aggiornaLista();
+
+    alert("Codice ricaricato!");
+}
+
+const qrElement = document.getElementById("qrcode");
+const qrText = location.href;
+
+QRCode.toCanvas(qrElement, qrText, {
+    width: 220,
+    margin: 2,
+    color: {
+        dark: "#000000",
+        light: "#ffffff"
+    }
+}, function(error) {
+    if (error) {
+        console.error(error);
+    } else {
+        console.log("QR code creato!");
+    }
+});
+
+aggiornaLista();
+
+</script>
+
+</body>
+</html>
